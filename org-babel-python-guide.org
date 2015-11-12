@@ -1,0 +1,170 @@
+#+AUTHOR: Austin Bingham
+#+TITLE: org-mode Python
+#+EPRESENT_FRAME_LEVEL: 2
+#+REVEAL_THEME: night
+#+OPTIONS: num:nil
+
+These are just some notes on how to do Python code in org-babel. All of this is
+covered on the web in other places, [[http://orgmode.org/worg/org-contrib/babel/languages/ob-doc-python.html][in particular here]]. I created this document
+as I was experimenting with org-mode and Python, though, and I thought it might
+be useful for future reference.
+
+* Setup
+You'll likely need to configure emacs to get the most out of org and babel.
+
+First, make sure you've installed org-mode and org-babel. There are many ways to
+do this, and the "correct" way depends on your setup, so I'll leave that up to
+you.
+
+** Add Python support to org-babel
+
+You need to make sure that python is enabled in org-babel-do-load-languages.
+That will look something like this.
+
+#+begin_src emacs-lisp
+(org-babel-do-load-languages
+   'org-babel-load-languages
+   '((python . t)))
+#+end_src
+
+#+RESULTS:
+: ((python . t))
+
+This is the advice you'll find on the web. Note, however, that the above code
+stomps anything else already in ~org-babel-load-languages~.
+
+Another approach that keeps any existing values is:
+#+begin_src emacs-lisp
+  (add-to-list 'org-babel-load-languages '(python . t))
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   org-babel-load-languages)
+#+end_src
+
+#+RESULTS:
+: ((python . t))
+
+* The most basic example
+
+In a non-session block, just return a value and it gets printed as the result.
+
+#+begin_src python
+return "Hello, world"
+#+end_src
+
+#+RESULTS:
+: Hello, world
+
+You can, of course, have more complex code in the block.
+#+begin_src python
+  def complex_function(x):
+      return x + 1
+
+  return complex_function(41)
+#+end_src
+
+#+RESULTS:
+: 42
+
+* Sessions
+
+Sessions give you persisten Python runtimes across code blocks. Variables can be accessed across blocks, etc.
+
+To use a sessio block, simply put ~:session~ as an option in your ~begin_src~ line:
+
+#+begin_src python :session
+# code goes here...
+#+end_src
+
+#+RESULTS:
+
+** Output is result of last expression
+
+In sessions, the "result" of a code block is simply the result of the last
+expression. In other words, there's no need to return any thing. Here, the
+result is whatever ~2 + bar()~ evaluates to:
+
+#+begin_src python :session
+def bar():
+    return 40
+
+2 + bar()
+#+end_src
+
+#+RESULTS:
+: 42
+
+** Access earlier session
+Since sessions are persistent, you can access values from earlier code blocks. Here we re-use ~bar()~:
+
+#+begin_src python :session
+"The answer is not {}.".format(bar() + 3)
+#+end_src
+
+#+RESULTS:
+: The answer is not 43.
+
+** Named sessions
+
+You can have multiple Python session, each with a different name. Let's create
+two session, each with ~x~ bound to a different value.
+
+#+begin_src python :session alpha
+x = "alpha session"
+#+end_src
+
+#+RESULTS:
+
+#+begin_src python :session beta
+x = "beta session"
+#+end_src
+
+#+RESULTS:
+
+Note how the previous two blocks don't have a result. This is because assignment
+in Python isn't an expression.
+
+Now we can access those values later by specifying the appropriate session names:
+#+begin_src python :session alpha
+"This is {}".format(x)
+#+end_src
+
+#+RESULTS:
+: This is alpha session
+
+#+begin_src python :session beta
+"This is {}".format(x)
+#+end_src
+
+#+RESULTS:
+: This is beta session
+
+* TODO
+- result types
+- inline
+- tables
+- plotting?
+
+* Let's try a table
+
+Here is some important scientific data...
+
+
+#+tblname: data_table
+| b | 2 |
+| a | 1 |
+| c | 3 |
+
+And a mind-blowing calculation
+
+#+begin_src python :var data=data_table :results pp
+
+table = {i[0]: i[1] for i in data}
+return list(table.items())
+  
+#+end_src
+
+#+RESULTS:
+: [('a', 1), ('c', 3), ('b', 2)]
+
+Two plus two equals src_python{return 2+2} {{{results(=4=)}}}
